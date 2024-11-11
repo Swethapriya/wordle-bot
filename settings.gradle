@@ -1,0 +1,5 @@
+rootProject.name = 'solver'
+
+include ':wordle'
+
+project(':wordle').projectDir = "$rootDir/wordle" as File

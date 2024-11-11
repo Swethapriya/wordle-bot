@@ -1,0 +1,52 @@
+buildscript {
+    ext.spring_boot_version = '3.0.7'
+    ext.commons_lang3_version = '3.12.0'
+    ext.slf4j_api_version = '1.7.36'
+    ext.logback_classic_version = '1.2.11'
+    ext.lombok_version = '1.18.24'
+}
+
+
+allprojects {
+    group = 'org.swetha.gamers'
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: "java"
+
+    sourceCompatibility = 17
+    targetCompatibility = 17
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+
+    task copyDependencies(type: Copy) {
+        into "$buildDir/libs/lib"
+        from {
+            configurations.runtimeClasspath.collect { it.isDirectory() ? it : fileTree(it) }
+        }
+
+    }
+    build.finalizedBy(copyDependencies)
+
+
+    dependencies {
+        implementation("org.springframework.boot:spring-boot-starter-jersey:$spring_boot_version") {
+            exclude module: "spring-boot-starter-tomcat"
+        }
+
+        implementation("org.springframework.boot:spring-boot-starter-jetty:3.1.4") {
+            exclude module: "jakarta.servlet-api"
+        }
+        implementation 'jakarta.servlet:jakarta.servlet-api:5.0.0'
+        implementation "org.projectlombok:lombok:$lombok_version"
+        annotationProcessor "org.projectlombok:lombok:$lombok_version"
+
+        implementation "org.apache.commons:commons-lang3:$commons_lang3_version"
+    }
+}
+
