@@ -1,6 +1,11 @@
 package org.swetha.gamers.wordle.resources;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+@Getter
 public class Letter {
-    char[] possibilities;
-    char solution;
+    int frequency;
+    int[] positions;
 }

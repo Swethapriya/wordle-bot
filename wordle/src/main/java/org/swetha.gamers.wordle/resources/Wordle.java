@@ -1,12 +1,12 @@
 package org.swetha.gamers.wordle.resources;
 
+import lombok.Getter;
+
+@Getter
 public class Wordle {
-   Letter first;
-   Letter second;
-   Letter third;
-   Letter fourth;
-   Letter fifth;
-   char[] possibilities;
-   char[] present;
-   char[] absent;
+   WORD first;
+   WORD second;
+   WORD third;
+   WORD fourth;
+   WORD fifth;
 }

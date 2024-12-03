@@ -1,11 +1,13 @@
 package org.swetha.gamers.wordle.service;
 
 
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.swetha.gamers.wordle.resources.Answer;
+import org.swetha.gamers.wordle.resources.Letter;
 import org.swetha.gamers.wordle.resources.Wordle;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 
 import static org.swetha.gamers.wordle.resources.Constants.ALHPHABET;
 import static org.swetha.gamers.wordle.resources.Constants.WORDLE_WORDS;
@@ -50,7 +52,31 @@ public class Guesser {
 
     public static String guess(Wordle wordle) {
         new Guesser();
+        HashMap<Character, Letter> SOLUTION_ALPHABET = new HashMap<>();
 //        return WORDLE_WORDS.get((int) (Math.random() * WORDLE_WORDS.toArray().length));
+        if (ObjectUtils.isNotEmpty(wordle.getFirst())) {
+            char[] guess1 = wordle.getFirst().getWord();
+            String[] color = wordle.getFirst().getColor();
+            for (int i = 0 ; i < 5; i++) {
+                int[] positions = new int[]{1, 2, 3, 4, 5};
+                char letter = guess1[i];
+                String presence = color[i];
+                if (StringUtils.equalsIgnoreCase(presence, "grey")) {
+                    if (!SOLUTION_ALPHABET.containsKey(letter)) {
+                        SOLUTION_ALPHABET.put(letter, new Letter(0, new int[]{}));
+                    }
+                } else if (StringUtils.equalsIgnoreCase(presence, "yellow")) {
+                    int finalI = i;
+                    int[] possiblePositions = Arrays.stream(positions).filter(position -> position!= finalI).toArray();
+                    if (!SOLUTION_ALPHABET.containsKey(letter)) {
+                        SOLUTION_ALPHABET.put(letter, new Letter(1, possiblePositions));
+                    } else {
+                      //TODO
+                    }
+                }
+
+            }
+        }
         return guessValue.get(guessSortedValues.get(0));
     }
 }
