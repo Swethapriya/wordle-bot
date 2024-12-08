@@ -7,9 +7,7 @@ import org.swetha.gamers.wordle.resources.Letter;
 import org.swetha.gamers.wordle.resources.WORD;
 import org.swetha.gamers.wordle.resources.Wordle;
 
-import java.lang.reflect.Array;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static org.swetha.gamers.wordle.resources.Constants.ALHPHABET;
 import static org.swetha.gamers.wordle.resources.Constants.WORDLE_WORDS;
@@ -58,28 +56,57 @@ public class Guesser {
         new Guesser();
         String suggest = "";
         HashMap<Character, Letter> SOLUTION_ALPHABET = new HashMap<>();
-//        return WORDLE_WORDS.get((int) (Math.random() * WORDLE_WORDS.toArray().length));
+        HashMap<Character, Integer> MUST = new HashMap<>();
         if (ObjectUtils.isNotEmpty(wordle.getFirst())) {
             SOLUTION_ALPHABET = populate(wordle.getFirst(), SOLUTION_ALPHABET);
+            MUST = populateMust(wordle.getFirst(), MUST);
         }
         if (ObjectUtils.isNotEmpty(wordle.getSecond())) {
             SOLUTION_ALPHABET = populate(wordle.getSecond(), SOLUTION_ALPHABET);
+            MUST = populateMust(wordle.getFirst(), MUST);
         }
         if (ObjectUtils.isNotEmpty(wordle.getThird())) {
             SOLUTION_ALPHABET = populate(wordle.getThird(), SOLUTION_ALPHABET);
+            MUST = populateMust(wordle.getFirst(), MUST);
+        }
+        if (ObjectUtils.isNotEmpty(wordle.getFourth())) {
+            SOLUTION_ALPHABET = populate(wordle.getFourth(), SOLUTION_ALPHABET);
+            MUST = populateMust(wordle.getFirst(), MUST);
+        }
+        if (ObjectUtils.isNotEmpty(wordle.getFifth())) {
+            SOLUTION_ALPHABET = populate(wordle.getFifth(), SOLUTION_ALPHABET);
+            MUST = populateMust(wordle.getFirst(), MUST);
         }
 
-        int count = 1;
         for (int i = 0; i < guessSortedValues.size(); i++) {
             for (int j = 0; j < guessValue.get(guessSortedValues.get(i)).size(); j++){
                 suggest = guessValue.get(guessSortedValues.get(i)).get(j);
-                if(isValidGuess(suggest.toLowerCase(), SOLUTION_ALPHABET)) {
+                if(isValidGuess(suggest.toLowerCase(), SOLUTION_ALPHABET, MUST)) {
                     return suggest;
                 }
             }
         }
 
         return suggest;
+    }
+
+    private static HashMap<Character, Integer> populateMust(WORD guess, HashMap<Character, Integer> must) {
+        char[] guess1 = guess.getWord();
+        String[] color = guess.getColor();
+        for (int i = 0 ; i < 5; i++) {
+            char letter = guess1[i];
+            String presence = color[i];
+            if (StringUtils.equalsIgnoreCase(presence, "yellow")) {
+                if (!must.containsKey(letter)) {
+                    must.put(letter, -1);
+                }
+            } else if (StringUtils.equalsIgnoreCase(presence, "green")) {
+                if (!must.containsKey(letter)) {
+                    must.put(letter, i);
+                }
+            }
+        }
+        return must;
     }
 
     private static HashMap<Character, Letter> populate(WORD guess, HashMap<Character, Letter> solutionAlphabet) {
@@ -110,7 +137,7 @@ public class Guesser {
         return solutionAlphabet;
     }
 
-    private static boolean isValidGuess(String suggest, HashMap<Character, Letter> SOLUTION_ALPHABET) {
+    private static boolean isValidGuess(String suggest, HashMap<Character, Letter> SOLUTION_ALPHABET, HashMap<Character, Integer> MUST) {
         for (int i = 0; i < 5; i++) {
             char letter = suggest.charAt(i);
             if (SOLUTION_ALPHABET.containsKey(letter)) {
@@ -122,6 +149,16 @@ public class Guesser {
                 }
             }
         }
+        Set<Character> mustKeys = MUST.keySet();
+        for (char letter : mustKeys) {
+            Integer position = MUST.get(letter);
+            if (!suggest.contains(letter + "")) {
+                return false;
+            } else if (position != -1 && suggest.charAt(position - 1) != letter) {
+                return false;
+            }
+        }
+
         return true;
     }
 }
