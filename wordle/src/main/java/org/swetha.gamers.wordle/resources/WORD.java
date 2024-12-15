@@ -4,6 +4,6 @@ import lombok.Getter;
 
 @Getter
 public class WORD {
-    char[] word;
+    String word;
     String[] color;
 }

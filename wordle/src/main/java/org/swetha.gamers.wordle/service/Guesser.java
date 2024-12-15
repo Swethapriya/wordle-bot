@@ -63,25 +63,25 @@ public class Guesser {
         }
         if (ObjectUtils.isNotEmpty(wordle.getSecond())) {
             SOLUTION_ALPHABET = populate(wordle.getSecond(), SOLUTION_ALPHABET);
-            MUST = populateMust(wordle.getFirst(), MUST);
+            MUST = populateMust(wordle.getSecond(), MUST);
         }
         if (ObjectUtils.isNotEmpty(wordle.getThird())) {
             SOLUTION_ALPHABET = populate(wordle.getThird(), SOLUTION_ALPHABET);
-            MUST = populateMust(wordle.getFirst(), MUST);
+            MUST = populateMust(wordle.getThird(), MUST);
         }
         if (ObjectUtils.isNotEmpty(wordle.getFourth())) {
             SOLUTION_ALPHABET = populate(wordle.getFourth(), SOLUTION_ALPHABET);
-            MUST = populateMust(wordle.getFirst(), MUST);
+            MUST = populateMust(wordle.getFourth(), MUST);
         }
         if (ObjectUtils.isNotEmpty(wordle.getFifth())) {
             SOLUTION_ALPHABET = populate(wordle.getFifth(), SOLUTION_ALPHABET);
-            MUST = populateMust(wordle.getFirst(), MUST);
+            MUST = populateMust(wordle.getFifth(), MUST);
         }
 
-        for (int i = 0; i < guessSortedValues.size(); i++) {
-            for (int j = 0; j < guessValue.get(guessSortedValues.get(i)).size(); j++){
-                suggest = guessValue.get(guessSortedValues.get(i)).get(j);
-                if(isValidGuess(suggest.toLowerCase(), SOLUTION_ALPHABET, MUST)) {
+        for (Integer guessSortedValue : guessSortedValues) {
+            for (int j = 0; j < guessValue.get(guessSortedValue).size(); j++) {
+                suggest = guessValue.get(guessSortedValue).get(j);
+                if (isValidGuess(suggest.toLowerCase(), SOLUTION_ALPHABET, MUST)) {
                     return suggest;
                 }
             }
@@ -91,30 +91,26 @@ public class Guesser {
     }
 
     private static HashMap<Character, Integer> populateMust(WORD guess, HashMap<Character, Integer> must) {
-        char[] guess1 = guess.getWord();
+        String guess1 = guess.getWord();
         String[] color = guess.getColor();
         for (int i = 0 ; i < 5; i++) {
-            char letter = guess1[i];
+            char letter = guess1.charAt(i);
             String presence = color[i];
             if (StringUtils.equalsIgnoreCase(presence, "yellow")) {
-                if (!must.containsKey(letter)) {
-                    must.put(letter, -1);
-                }
+                must.put(letter, -1);
             } else if (StringUtils.equalsIgnoreCase(presence, "green")) {
-                if (!must.containsKey(letter)) {
-                    must.put(letter, i);
-                }
+                must.put(letter, i);
             }
         }
         return must;
     }
 
     private static HashMap<Character, Letter> populate(WORD guess, HashMap<Character, Letter> solutionAlphabet) {
-        char[] guess1 = guess.getWord();
+        String guess1 = guess.getWord();
         String[] color = guess.getColor();
         for (int i = 0 ; i < 5; i++) {
             int[] positions = new int[]{1, 2, 3, 4, 5};
-            char letter = guess1[i];
+            char letter = guess1.charAt(i);
             String presence = color[i];
             if (StringUtils.equalsIgnoreCase(presence, "grey")) {
                 if (!solutionAlphabet.containsKey(letter)) {
@@ -154,7 +150,7 @@ public class Guesser {
             Integer position = MUST.get(letter);
             if (!suggest.contains(letter + "")) {
                 return false;
-            } else if (position != -1 && suggest.charAt(position - 1) != letter) {
+            } else if (position != -1 && suggest.charAt(position) != letter) {
                 return false;
             }
         }
