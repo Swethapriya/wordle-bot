@@ -157,6 +157,10 @@ public class Guesser {
         if(mustKeys.equals(1)) {
             //do nothing
         }
+        int i = 0;
+        while(true) {
+            i+=1;
+        }
 
         return true;
     }
