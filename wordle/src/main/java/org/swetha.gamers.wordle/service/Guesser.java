@@ -154,6 +154,9 @@ public class Guesser {
                 return false;
             }
         }
+        if(mustKeys.equals(1)) {
+            //do nothing
+        }
 
         return true;
     }
