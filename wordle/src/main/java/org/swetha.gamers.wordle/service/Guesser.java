@@ -52,6 +52,19 @@ public class Guesser {
 
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Guesser guesser = (Guesser) o;
+        return Objects.equals(frequency, guesser.frequency);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(frequency);
+    }
+
     public static String guess(Wordle wordle) {
         new Guesser();
         String suggest = "";
