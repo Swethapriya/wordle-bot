@@ -1,6 +1,5 @@
 package org.swetha.gamers.wordle;
 
-import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.stereotype.Component;
 import org.swetha.gamers.wordle.endpoints.solver;
 
@@ -10,4 +9,3 @@ public class ApplicationConfig extends ResourceConfig {
         register(solver.class);
     }
 }
-
