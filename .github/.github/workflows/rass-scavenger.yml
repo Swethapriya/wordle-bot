@@ -1,0 +1,78 @@
+name: RASS Scavenger
+
+on:
+  # Run every Monday at 02:00 UTC
+  schedule:
+    - cron: "0 2 * * 1"
+
+  # Allow manual trigger from the GitHub Actions UI
+  # NOTE: workflow_dispatch only appears in the Actions tab when this file
+  # is on the repository's DEFAULT branch (main/master). Merge to your
+  # default branch if you don't see the "Run workflow" button.
+  workflow_dispatch:
+    inputs:
+      max_prs:
+        description: "Maximum PRs to open this run (default: 5)"
+        required: false
+        default: "5"
+      scan_root:
+        description: "Root directory to scan for Java files, relative to scavenger/ (default: .)"
+        required: false
+        default: "."
+
+  # Validate the workflow on every push that touches it
+  push:
+    paths:
+      - ".github/workflows/rass-scavenger.yml"
+      - "../../scavenger/rass_scavenger"
+      - "../../scavenger/requirements.txt"
+
+jobs:
+  scavenge:
+    name: Scan & Fix Java Reliability Issues
+    runs-on: ubuntu-latest
+
+    # Required permissions for creating branches and PRs
+    permissions:
+      contents: write
+      pull-requests: write
+
+    defaults:
+      run:
+        # All run steps execute from inside the scavenger/ subdirectory
+        working-directory: scavenger
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          # Path is relative to repo root, not working-directory
+          cache-dependency-path: scavenger/requirements.txt
+
+      - name: Install dependencies
+        run: pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Check required secrets
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::ANTHROPIC_API_KEY secret is not set. Add it in Settings → Secrets → Actions."
+            exit 1
+          fi
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Run RASS Scavenger
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RASS_MAX_PRS: ${{ github.event.inputs.max_prs || '5' }}
+          RASS_SCAN_ROOT: ${{ github.event.inputs.scan_root || '..' }}
+        run: python -m rass_scavenger

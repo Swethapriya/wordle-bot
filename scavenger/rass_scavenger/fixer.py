@@ -92,16 +92,32 @@ def _top_priority_issue(issues: list[Issue]) -> Issue:
     )
 
 
-def generate_fix(filepath: str, source: str, issues: list[Issue]) -> tuple[str | None, Issue | None]:
+def generate_fix(
+    filepath: str,
+    source: str,
+    issues: list[Issue],
+    target_rule: str | None = None,
+) -> tuple[str | None, Issue | None]:
     """
-    Call Claude to fix the single highest-priority issue in the file.
+    Call Claude to fix one issue in the file.
+
+    If *target_rule* is provided, the issue whose sonar_rule matches it is fixed
+    (earliest occurrence wins when multiple lines are affected).  Otherwise the
+    single highest-priority issue (high > medium > low, then earliest line) is used.
 
     Returns (fixed_source, fixed_issue) or (None, None) if no change was produced.
     """
     if not issues:
         return None, None
 
-    target = _top_priority_issue(issues)
+    if target_rule:
+        matching = [i for i in issues if i.sonar_rule == target_rule]
+        if not matching:
+            return None, None
+        # Among matching issues pick the one with the highest severity, then earliest line
+        target = max(matching, key=lambda i: (_SEVERITY_RANK.get(i.severity, 0), -i.line))
+    else:
+        target = _top_priority_issue(issues)
 
     issue_block = (
         f"- Line {target.line} [{target.severity.upper()}] [{target.sonar_rule}] "
@@ -139,10 +155,13 @@ def generate_fix(filepath: str, source: str, issues: list[Issue]) -> tuple[str |
     return fixed, target
 
 
-def build_pr_body(filepath: str, all_issues: list[Issue], fixed_issue: Issue | None = None) -> str:
-    """Generate a rich PR description.
+def build_pr_body(target_rule: str, file_fixes: list[dict]) -> str:
+    """Generate a rich PR description covering all fixed files for a single SonarQube rule.
 
-    Shows ALL detected issues in a full table, and highlights which one was fixed.
+    Args:
+        target_rule: the SonarQube rule ID fixed across every file (e.g. "S2095").
+        file_fixes:  list of dicts produced by main.py, each containing:
+                       filepath, fixed_source, issues (list[Issue]), fixed_issue (Issue).
     """
     severity_emoji = {"high": "🔴", "medium": "🟡", "low": "🟢"}
 
@@ -152,47 +171,61 @@ def build_pr_body(filepath: str, all_issues: list[Issue], fixed_issue: Issue | N
         rule_num = rule[1:] if rule.startswith("S") else rule
         return f"[{rule}](https://rules.sonarsource.com/java/RSPEC-{rule_num})"
 
-    issue_rows = []
-    for i in sorted(all_issues, key=lambda x: (_SEVERITY_RANK.get(x.severity, 0) * -1, x.line)):
-        fixed_marker = " ✅ **FIXED**" if (fixed_issue and i is fixed_issue) else ""
-        issue_rows.append(
-            f"| {severity_emoji.get(i.severity, '⚪')} {i.severity.upper()}{fixed_marker} "
-            f"| `{i.check_type}` | {_sonar_link(i.sonar_rule)} "
-            f"| Line {i.line} | {i.description} |"
+    rule_link = _sonar_link(target_rule)
+    representative_fix: Issue = file_fixes[0]["fixed_issue"]
+    check_type = representative_fix.check_type
+
+    # Build a per-file summary section
+    file_sections: list[str] = []
+    total_detected = 0
+    for fix in file_fixes:
+        filepath: str = fix["filepath"]
+        all_issues: list[Issue] = fix["issues"]
+        fixed_issue: Issue = fix["fixed_issue"]
+        total_detected += len(all_issues)
+
+        rows = []
+        for iss in sorted(all_issues, key=lambda x: (_SEVERITY_RANK.get(x.severity, 0) * -1, x.line)):
+            marker = " ✅ **FIXED**" if iss is fixed_issue else ""
+            rows.append(
+                f"| {severity_emoji.get(iss.severity, '⚪')} {iss.severity.upper()}{marker} "
+                f"| `{iss.check_type}` | {_sonar_link(iss.sonar_rule)} "
+                f"| Line {iss.line} | {iss.description} |"
+            )
+
+        table = "\n".join(rows)
+        file_sections.append(
+            f"#### `{filepath}`\n"
+            f"**Fixed:** line {fixed_issue.line} ({fixed_issue.severity.upper()})  "
+            f"| **Total issues in file:** {len(all_issues)}\n\n"
+            f"| Severity | Check | SonarQube Rule | Location | Description |\n"
+            f"|----------|-------|----------------|----------|-------------|\n"
+            f"{table}"
         )
 
-    issue_table = "\n".join(issue_rows)
-
-    fixed_summary = (
-        f"**Fixed in this PR:** `{fixed_issue.check_type}` [{fixed_issue.sonar_rule}] "
-        f"at line {fixed_issue.line} (severity: {fixed_issue.severity.upper()})"
-        if fixed_issue
-        else "**No automatic fix was generated.**"
-    )
-
-    remaining = len(all_issues) - (1 if fixed_issue else 0)
+    files_detail = "\n\n".join(file_sections)
+    file_count = len(file_fixes)
 
     return f"""\
 ## 🤖 RASS Scavenger — Java Reliability Fix
 
-**File:** `{filepath}`
-**Total issues detected:** {len(all_issues)} &nbsp;|&nbsp; **Fixed in this PR:** 1 (highest priority) &nbsp;|&nbsp; **Remaining:** {remaining}
+**SonarQube Rule:** {rule_link} — `{check_type}`
+**Files fixed in this PR:** {file_count} &nbsp;|&nbsp; **Total issues detected across those files:** {total_detected}
 
-{fixed_summary}
+---
 
-### All detected issues
-| Severity | Check | SonarQube Rule | Location | Description |
-|----------|-------|----------------|----------|-------------|
-{issue_table}
+### Fixed files
+{files_detail}
 
 ---
 
 ### Strategy
-RASS Scavenger detects all SonarQube-mapped issues but fixes **only the highest-priority bug per PR**
-to keep diffs small, focused, and easy to review. Remaining issues will be addressed in follow-up PRs.
+RASS Scavenger fixes **one SonarQube rule per PR** across up to **5 files** to keep diffs
+focused, reviewable, and bisectable. All commits on this branch address rule {rule_link} only.
+Remaining rules and any deferred files will be addressed in subsequent runs.
 
 ### Checklist before merging
-- [ ] Review the diff — confirm only the targeted line(s) changed
+- [ ] Review each file's diff — confirm only the targeted rule's line(s) changed
 - [ ] Run existing tests
 - [ ] For `java_missing_timeout` fixes: verify ConnectTimeout/SocketTimeout values are appropriate
 - [ ] For `java_hardcoded_credentials` fixes: ensure the environment variable is set in CI/CD
