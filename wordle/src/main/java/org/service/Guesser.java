@@ -1,16 +1,16 @@
-package org.swetha.gamers.wordle.service;
+package org.service;
 
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.swetha.gamers.wordle.resources.Letter;
-import org.swetha.gamers.wordle.resources.WORD;
-import org.swetha.gamers.wordle.resources.Wordle;
+import org.resources.Letter;
+import org.resources.WORD;
+import org.resources.Wordle;
 
 import java.util.*;
 
-import static org.swetha.gamers.wordle.resources.Constants.ALHPHABET;
-import static org.swetha.gamers.wordle.resources.Constants.WORDLE_WORDS;
+import static org.resources.Constants.ALHPHABET;
+import static org.resources.Constants.WORDLE_WORDS;
 
 public class Guesser {
     public HashMap<Character, Integer> frequency;

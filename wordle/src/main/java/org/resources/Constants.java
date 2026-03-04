@@ -1,4 +1,4 @@
-package org.swetha.gamers.wordle.resources;
+package org.resources;
 
 import java.util.Arrays;
 import java.util.List;

@@ -1,4 +1,4 @@
-package org.swetha.gamers.wordle.endpoints;
+package org.endpoints;
 
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -7,8 +7,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.springframework.stereotype.Component;
-import org.swetha.gamers.wordle.resources.Wordle;
-import org.swetha.gamers.wordle.service.Guesser;
+import org.resources.Wordle;
+import org.service.Guesser;
 
 @Path("/wordle")
 @Component
