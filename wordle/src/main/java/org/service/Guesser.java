@@ -162,6 +162,5 @@ public class Guesser {
             i+=1;
         }
 
-        return true;
     }
 }

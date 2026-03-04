@@ -7,8 +7,8 @@ import org.springframework.context.annotation.ComponentScan;
 
 import java.util.TimeZone;
 
+@ComponentScan(basePackages = {"org.endpoints", "org.service", "org.resources"})
 @SpringBootApplication
-@ComponentScan("org.swetha.gamers")
 public class Main {
     public static void main(String[] args) {
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"));

@@ -1,23 +1,14 @@
 package org.endpoints;
 
-import jakarta.validation.Valid;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import org.springframework.stereotype.Component;
 import org.resources.Wordle;
 import org.service.Guesser;
+import org.springframework.web.bind.annotation.*;
 
-@Path("/wordle")
-@Component
+@RequestMapping("/wordle")
+@RestController
 public class solver {
-    @GET
-    @Path("/guess")
-    @Consumes({MediaType.APPLICATION_JSON})
-    @Produces({MediaType.APPLICATION_JSON})
-    public String getCombination(@Valid Wordle wordle) {
+    @GetMapping("/guess")
+    public String getCombination( Wordle wordle) {
         return Guesser.guess(wordle);
     }
 }

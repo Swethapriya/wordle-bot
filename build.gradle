@@ -2,13 +2,18 @@ buildscript {
     ext.spring_boot_version = '3.0.7'
     ext.commons_lang3_version = '3.12.0'
     ext.slf4j_api_version = '1.7.36'
-    ext.logback_classic_version = '1.2.11'
-    ext.lombok_version = '1.18.24'
+    ext.lombok_version = '1.18.30'
+    ext.jwt_version = '0.11.5'
 }
 
+plugins {
+    id 'org.springframework.boot' version "${spring_boot_version}" apply false
+    id 'io.spring.dependency-management' version '1.1.4' apply false
+    id 'java'
+}
 
 allprojects {
-    group = 'org.swetha.gamers'
+    group = 'org'
     repositories {
         mavenLocal()
         mavenCentral()
@@ -17,9 +22,11 @@ allprojects {
 
 subprojects {
     apply plugin: "java"
+    apply plugin: 'io.spring.dependency-management'
 
     sourceCompatibility = 17
     targetCompatibility = 17
+
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
     }
@@ -35,18 +42,39 @@ subprojects {
 
 
     dependencies {
-        implementation("org.springframework.boot:spring-boot-starter-jersey:$spring_boot_version") {
-            exclude module: "spring-boot-starter-tomcat"
-        }
-
-        implementation("org.springframework.boot:spring-boot-starter-jetty:3.1.4") {
-            exclude module: "jakarta.servlet-api"
-        }
+        implementation 'org.springframework.boot:spring-boot-starter-web:3.2.5'
+        implementation 'org.springframework.boot:spring-boot-starter-logging'
+        implementation 'org.springframework.boot:spring-boot-starter-jetty:3.2.5'
         implementation 'jakarta.servlet:jakarta.servlet-api:5.0.0'
-        implementation "org.projectlombok:lombok:$lombok_version"
+        compileOnly "org.projectlombok:lombok:$lombok_version"
         annotationProcessor "org.projectlombok:lombok:$lombok_version"
-
         implementation "org.apache.commons:commons-lang3:$commons_lang3_version"
+    }
+}
+
+project(':wordle') {
+    apply plugin: 'org.springframework.boot'
+
+    tasks.named('bootJar') {
+        archiveFileName = 'app.jar'
+    }
+
+    dependencies {
+        // Security dependencies
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation "io.jsonwebtoken:jjwt-api:$jwt_version"
+        runtimeOnly "io.jsonwebtoken:jjwt-impl:$jwt_version"
+        runtimeOnly "io.jsonwebtoken:jjwt-jackson:$jwt_version"
+
+
+        // Email dependencies
+        implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+        // Validation
+        implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+        // Razorpay payment
+        implementation 'com.razorpay:razorpay-java:1.4.5'
     }
 }
 
