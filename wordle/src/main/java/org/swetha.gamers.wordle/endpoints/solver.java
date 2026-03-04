@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.swetha.gamers.wordle.resources.Wordle;
 import org.swetha.gamers.wordle.service.Guesser;
 
+// TODO(rass-scavenger): Move this file to directory "org/swetha/gamers/wordle/endpoints" (replace dot with slash in "swetha.gamers")
 @Path("/wordle")
 @Component
 public class solver {
